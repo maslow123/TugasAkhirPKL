@@ -1,0 +1,179 @@
+<html>
+    <head>
+        <title>WebSocket Echo Client</title>
+	<style>
+		body{
+			font-family:'Nunito';
+			text-align:center;
+			}
+		#button{
+			margin-left:-380px;
+			}
+		#chat{
+			max-width:600px;
+			margin:20px auto;
+			border:1px solid #ddd;
+			box-shadow:1px 1px 1px rgba(0,0,0,0.05);
+			border-radius:2px;
+			}
+		#inputText{
+			max-width:600px;
+			margin:-15px auto;
+			border:1px solid #ddd;
+			box-shadow:1px 1px 1px rgba(0,0,0,0.05);
+			border-radius:2px;
+			margin-bottom:5px;
+			font-size:12px;
+			}
+		#cWindow p{
+			height:400px;
+			overflow:auto;
+			background:#F9F9F9;
+			}
+		input{
+			padding:10px 20px;
+			box-sizing:border-box;
+			background:#eee;
+			border:0;
+			display:block;
+			width:100%;
+			background:#fff;
+			border-bottom:1px solid #eee;
+			font-family: Nunito;
+			font-size:16px;
+			}
+		label{
+			box-sizing:border-box;
+			display:block;
+			padding:10px 20px;
+			}
+		#cWindow strong{
+			color:#575ed8;
+			}
+		#send{
+			background:#575ed8;
+			color:#fff;
+			font-size:18px;
+			border:0;
+			padding:12px 0;
+			width:100%;
+			border-radius:0 0 2px 2px;
+			margin-bottom:-15px;
+			}
+		#debugTextArea{
+			height:300px;
+			overflow:auto;
+			background:#F9F9F9;
+			width:100%;
+			margin-top:-16px;
+			font-size:12px;
+			font-family:'Nunito';
+			border-bottom: 1px solid #e9e9e9;
+			color:#555;
+			}
+	</style>
+    </head>
+    <body>
+        <h1>WebSocket Echo Client</h1>
+        <p>
+	   <div id="button">
+	            <button onClick="initWebSocket();">Connect</button>
+        	    <button onClick="stopWebSocket();">Disconnect</button>
+        	    <button onClick="checkSocket();">State</button>
+	   </div>        
+	</p>
+	<div id="chat">
+		<div id="cWindow"></div>
+		<div id="input"></div>
+	        <p>
+        	    <textarea id="debugTextArea"></textarea>
+        	</p>
+        	<p>
+        	    <input type="text" id="inputText" placeholder="Please write the message here.." onkeydown="if(event.keyCode==13)sendMessage();"/>
+        	    <button onClick="sendMessage();" id="send">Send</button>
+        	</p>
+	</div>
+        <script type="text/javascript">
+            var debugTextArea = document.getElementById("debugTextArea");
+            function debug(message) {
+                // debugTextArea.value += message + "\n";
+                // debugTextArea.scrollTop = debugTextArea.scrollHeight;
+                debugTextArea.value = message;
+            }
+
+            function sendMessage() {
+                var msg = document.getElementById("inputText").value;
+                if ( websocket != null )
+                {
+                    document.getElementById("inputText").value = "";
+                    websocket.send( msg );
+                    console.log( "string sent :", '"'+msg+'"' );
+                }
+            }
+
+            var wsUri = "ws://localhost:2345";
+            var websocket = null;
+
+            function initWebSocket() {
+                try {
+                    if (typeof MozWebSocket == 'function')
+                        WebSocket = MozWebSocket;
+                    if ( websocket && websocket.readyState == 1 )
+                        websocket.close();
+                    websocket = new WebSocket( wsUri );
+                    websocket.onopen = function (evt) {
+                        debug("CONNECTED");
+                    };
+                    websocket.onclose = function (evt) {
+                        debug("DISCONNECTED");
+                    };
+                    websocket.onmessage = function (evt) {
+                        console.log( "Message received :", evt.data );
+                        debug( evt.data );
+                    };
+                    websocket.onerror = function (evt) {
+                        debug('ERROR: ' + evt.data);
+                    };
+                } catch (exception) {
+                    debug('ERROR: ' + exception);
+                }
+            }
+
+            function stopWebSocket() {
+                if (websocket)
+                    websocket.close();
+            }
+
+            function checkSocket() {
+                if (websocket != null) {
+                    var stateStr;
+                    switch (websocket.readyState) {
+                        case 0: {
+                            stateStr = "CONNECTING";
+                            break;
+                        }
+                        case 1: {
+                            stateStr = "OPEN";
+                            break;
+                        }
+                        case 2: {
+                            stateStr = "CLOSING";
+                            break;
+                        }
+                        case 3: {
+                            stateStr = "CLOSED";
+                            break;
+                        }
+                        default: {
+                            stateStr = "UNKNOW";
+                            break;
+                        }
+                    }
+                    debug("WebSocket state = " + websocket.readyState + " ( " + stateStr + " )");
+                } else {
+                    debug("WebSocket is null");
+                }
+            }
+        </script>
+    </body>
+</html>
